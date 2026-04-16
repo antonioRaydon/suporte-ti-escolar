@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, deleteDoc } from "firebase/firestore";
 
-// 1. CONFIGURAÇÃO FIREBASE
+// 1. SUA CONFIGURAÇÃO (Não altere estas chaves)
 const firebaseConfig = {
     apiKey: "AIzaSyDaRt0Pshh3cwn_7nRopxS0ffAVaA7Ixqw",
     authDomain: "suporte-ti-54cfc.firebaseapp.com",
@@ -26,33 +26,17 @@ const btnAdm = document.getElementById('btn-adm');
 const formChamado = document.getElementById('form-chamado');
 const listaChamados = document.getElementById('lista-chamados');
 
-// 3. ESCUTAR DADOS EM TEMPO REAL (MÁGICA DA NUVEM)
+// 3. ESCUTAR NUVEM EM TEMPO REAL
 onSnapshot(query(chamadosRef, orderBy("timestamp", "desc")), (snapshot) => {
-    const chamadosData = [];
-    snapshot.forEach((doc) => {
-        chamadosData.push({ id: doc.id, ...doc.data() });
-    });
-    renderizarChamados(chamadosData);
+    const dados = [];
+    snapshot.forEach((doc) => dados.push({ id: doc.id, ...doc.data() }));
+    renderizar(dados);
 });
 
-// 4. NAVEGAÇÃO
-btnProfessor.addEventListener('click', () => switchView('professor'));
-btnAdm.addEventListener('click', () => {
-    const senha = prompt("Digite a senha técnica:");
-    if (senha === "123") switchView('adm');
-    else alert("Senha incorreta!");
-});
-
-function switchView(viewName) {
-    Object.keys(views).forEach(v => views[v].classList.add('hidden'));
-    views[viewName].classList.remove('hidden');
-    btnProfessor.classList.toggle('active', viewName === 'professor');
-    btnAdm.classList.toggle('active', viewName === 'adm');
-}
-
-// 5. ENVIAR PARA O FIREBASE
+// 4. FUNÇÃO ENVIAR (O que estava travado)
 formChamado.addEventListener('submit', async (e) => {
     e.preventDefault();
+    console.log("Tentando enviar...");
 
     const novoChamado = {
         professor: document.getElementById('nome').value,
@@ -69,76 +53,53 @@ formChamado.addEventListener('submit', async (e) => {
     try {
         await addDoc(chamadosRef, novoChamado);
         formChamado.reset();
-        showToast("Chamado enviado para a nuvem!", "success");
+        alert("✅ Enviado com sucesso!");
     } catch (error) {
-        showToast("Erro ao enviar!", "danger");
+        console.error("Erro:", error);
+        alert("❌ Erro ao enviar. Verifique as regras do Firebase.");
     }
 });
 
-// 6. MARCAR COMO RESOLVIDO (NOVO MÉTODO FIREBASE)
+// 5. FUNÇÕES GLOBAIS (Para os botões do ADM funcionarem)
 window.marcarResolvido = async (id) => {
-    const campoSolucao = document.getElementById(`solucao-${id}`);
-    const solucaoTexto = campoSolucao.value.trim();
-
-    if (!solucaoTexto) return alert("Descreva a solução!");
-
-    const docRef = doc(db, "chamados", id);
-    await updateDoc(docRef, {
-        status: 'Resolvido',
-        solucao: solucaoTexto
-    });
+    const solucao = document.getElementById(`solucao-${id}`).value;
+    if (!solucao) return alert("Digite a solução!");
+    await updateDoc(doc(db, "chamados", id), { status: 'Resolvido', solucao: solucao });
 };
 
-// 7. EXCLUIR (NOVO MÉTODO FIREBASE)
 window.excluirChamado = async (id) => {
-    if (confirm("Excluir permanentemente?")) {
-        await deleteDoc(doc(db, "chamados", id));
-    }
+    if (confirm("Excluir chamado?")) await deleteDoc(doc(db, "chamados", id));
 };
 
-// 8. RENDERIZAR
-function renderizarChamados(dados) {
-    listaChamados.innerHTML = '';
-    
-    dados.forEach(c => {
-        const card = document.createElement('div');
-        card.className = `chamado-card urgencia-${c.urgencia} ${c.status === 'Resolvido' ? 'status-resolvido' : ''}`;
-        
-        card.innerHTML = `
-            <div class="chamado-meta">
-                <span><i class="far fa-clock"></i> ${c.data} às ${c.hora}</span>
-                <button onclick="window.print()" class="btn-print">Imprimir</button>
-            </div>
-            <div class="chamado-body">
-                <p><strong>Professor:</strong> ${c.professor}</p>
-                <p><strong>Local:</strong> ${c.local}</p>
-                <p><strong>Descrição:</strong> ${c.descricao}</p>
-            </div>
-            ${c.status === 'Pendente' ? `
-                <div class="area-resolucao">
-                    <textarea id="solucao-${c.id}" class="solucao-input" placeholder="Solução..."></textarea>
-                    <button onclick="marcarResolvido('${c.id}')" class="btn-done">Finalizar</button>
-                    <button onclick="excluirChamado('${c.id}')" class="btn-delete">Excluir</button>
-                </div>
-            ` : `
-                <div class="solucao-finalizada">
-                    <p><strong>✅ Solução:</strong> ${c.solucao}</p>
-                    <button onclick="excluirChamado('${c.id}')" class="btn-delete" style="width:100%">Excluir do Histórico</button>
-                </div>
-            `}
-        `;
-        listaChamados.appendChild(card);
-    });
+// 6. NAVEGAÇÃO
+btnProfessor.onclick = () => switchView('professor');
+btnAdm.onclick = () => {
+    if (prompt("Senha:") === "123") switchView('adm');
+};
 
-    // Atualiza Dashboard
-    document.getElementById('dash-pendentes').innerText = dados.filter(c => c.status === 'Pendente').length;
-    document.getElementById('dash-media').innerText = dados.filter(c => c.status === 'Resolvido').length;
+function switchView(v) {
+    views.professor.classList.toggle('hidden', v !== 'professor');
+    views.adm.classList.toggle('hidden', v !== 'adm');
 }
 
-function showToast(msg, tipo) {
-    const t = document.getElementById('toast');
-    t.innerText = msg;
-    t.style.background = tipo === 'success' ? '#22c55e' : '#ef4444';
-    t.classList.remove('hidden');
-    setTimeout(() => t.classList.add('hidden'), 3000);
+// 7. DESENHAR NA TELA
+function renderizar(dados) {
+    listaChamados.innerHTML = '';
+    dados.forEach(c => {
+        const div = document.createElement('div');
+        div.className = `chamado-card urgencia-${c.urgencia} ${c.status === 'Resolvido' ? 'status-resolvido' : ''}`;
+        div.innerHTML = `
+            <p><strong>${c.professor}</strong> - ${c.local} (${c.data})</p>
+            <p>${c.descricao}</p>
+            ${c.status === 'Pendente' ? `
+                <input type="text" id="solucao-${c.id}" placeholder="Solução...">
+                <button onclick="marcarResolvido('${c.id}')">Resolver</button>
+            ` : `<p>✅ ${c.solucao}</p>`}
+            <button onclick="excluirChamado('${c.id}')" style="color:red">Excluir</button>
+        `;
+        listaChamados.appendChild(div);
+    });
+    
+    document.getElementById('dash-pendentes').innerText = dados.filter(d => d.status === 'Pendente').length;
+    document.getElementById('dash-media').innerText = dados.filter(d => d.status === 'Resolvido').length;
 }
