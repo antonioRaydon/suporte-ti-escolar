@@ -84,31 +84,16 @@
 </main>
     <div id="toast" class="toast hidden"></div>
 
-    <script src="ti.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+          "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+        }
+      }
+    </script>
     
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyDaRt0Pshh3cwn_7nRopxS0ffAVaA7Ixqw",
-    authDomain: "suporte-ti-54cfc.firebaseapp.com",
-    projectId: "suporte-ti-54cfc",
-    storageBucket: "suporte-ti-54cfc.firebasestorage.app",
-    messagingSenderId: "923858106987",
-    appId: "1:923858106987:web:dc68b1b02a947320c68f2e",
-    measurementId: "G-NJ0L3B9JPE"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
-
+    <script type="module" src="ti.js"></script>
+   
 </body>
 </html>
