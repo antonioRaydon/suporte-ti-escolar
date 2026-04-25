@@ -3,86 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suporte TI Escolar</title>
+    <title>Suporte TI - Pro</title>
     <link rel="stylesheet" href="ti.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+
+    <div id="modal-login" class="modal hidden">
+        <div class="modal-content card">
+            <h2><i class="fas fa-lock"></i> Acesso Restrito</h2>
+            <p>Digite a senha para acessar o painel técnico</p>
+            <input type="password" id="senha-login" placeholder="Senha">
+            <div class="actions">
+                <button id="btn-entrar-login" class="btn-primary">Entrar</button>
+                <button id="btn-cancelar-login" class="btn-delete">Cancelar</button>
+            </div>
+        </div>
+    </div>
 
     <header>
         <div class="container header-content">
             <h1><i class="fas fa-tools"></i> Suporte TI Escolar</h1>
             <nav>
                 <button id="btn-professor" class="nav-btn active">Professor</button>
-                <button id="btn-adm" class="nav-btn">Área Técnica</button>
+                <button id="btn-adm" class="nav-btn">Painel Adm</button>
             </nav>
         </div>
     </header>
+
     <main class="container">
-    <section id="view-professor" class="view">
-        <div class="card">
-            <h2><i class="fas fa-plus-circle"></i> Abrir Novo Chamado</h2>
-            <form id="form-chamado">
-                <div class="grid-form">
-                    <div class="form-group">
-                        <label>Seu Nome</label>
-                        <input type="text" id="nome" required placeholder="Ex: Prof. Ricardo">
+        <section id="view-professor" class="view">
+            <div class="card">
+                <h2><i class="fas fa-plus-circle"></i> Abrir Novo Chamado</h2>
+                <form id="form-chamado">
+                    <div class="grid-form">
+                        <div class="form-group">
+                            <label>Seu Nome</label>
+                            <input type="text" id="nome" required placeholder="Ex: Prof. Ricardo">
+                        </div>
+                        <div class="form-group">
+                            <label>Local</label>
+                            <input type="text" id="local" required placeholder="Ex: Sala 12">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>Local</label>
-                        <input type="text" id="local" required placeholder="Ex: Sala 12">
+                        <label>Urgência</label>
+                        <select id="urgencia" required>
+                            <option value="Comum">🟢 Comum</option>
+                            <option value="Importante">🟡 Importante</option>
+                            <option value="Emergencia">🔴 Emergência</option>
+                        </select>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label>Urgência</label>
-                    <select id="urgencia" required>
-                        <option value="Comum">🟢 Comum</option>
-                        <option value="Importante">🟡 Importante</option>
-                        <option value="Emergencia">🔴 Emergência</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Descrição</label>
-                    <textarea id="descricao" rows="3" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-paperclip"></i> Anexo (Simulado)</label>
-                    <input type="file" id="anexo" accept="image/*">
-                </div>
-                <button type="submit" class="btn-primary">Enviar Chamado</button>
-            </form>
-        </div>
-    </section>
+                    <div class="form-group">
+                        <label>Descrição do Problema</label>
+                        <textarea id="descricao" rows="3" required placeholder="Descreva o problema aqui..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-camera"></i> Anexar Foto</label>
+                        <input type="file" id="anexo" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn-primary">Enviar Chamado</button>
+                </form>
+            </div>
+        </section>
 
-    <section id="view-adm" class="view hidden">
-        <div class="dashboard">
-            <div class="stat-card">
-                <span id="dash-pendentes">0</span>
-                <p>Pendentes</p>
-            </div>
-            <div class="stat-card">
-                <span id="dash-hoje">0</span>
-                <p>Hoje</p>
-            </div>
-            <div class="stat-card">
-                <span id="dash-media">0</span>
-                <p>Resolvidos</p>
-            </div>
+        <div id="modal-foto" class="modal hidden" onclick="fecharModalFoto(event)">
+    <div class="modal-foto-content">
+        <span class="close-modal" onclick="document.getElementById('modal-foto').classList.add('hidden')">&times;</span>
+        <img id="img-ampliada" src="" alt="Foto do problema">
+        <div class="foto-info">
+            <h4>Descrição do Problema:</h4>
+            <p id="desc-ampliada"></p>
         </div>
+    </div>
+</div>
 
-        <div class="admin-controls">
-            <input type="text" id="search-bar" placeholder="🔍 Buscar por local ou professor..." oninput="renderizarChamados()">
-            <select id="filter-status" onchange="renderizarChamados()">
-                <option value="todos">Todos os Status</option>
-                <option value="Pendente">Apenas Pendentes</option>
-                <option value="Resolvido">Apenas Resolvidos</option>
-            </select>
-        </div>
-        
-        <div id="lista-chamados" class="grid-chamados"></div>
-    </section>
-</main>
-    <div id="toast" class="toast hidden"></div>
+        <section id="view-adm" class="view hidden">
+            <div class="card">
+                <h3><i class="fas fa-chart-pie"></i> Relatório de Desempenho</h3>
+                <div class="charts-grid">
+                    <div class="chart-box"><canvas id="chartStatus"></canvas></div>
+                    <div class="chart-box"><canvas id="chartUrgencia"></canvas></div>
+                </div>
+                <button id="btn-imprimir" class="btn-primary" style="background: var(--dark);">
+                    <i class="fas fa-print"></i> Imprimir Relatório Mensal
+                </button>
+            </div>
+
+            <div class="admin-controls">
+                <input type="text" id="search-bar" placeholder="🔍 Buscar chamado...">
+                <select id="filter-status">
+                    <option value="todos">Todos</option>
+                    <option value="Pendente">Pendentes</option>
+                    <option value="Resolvido">Resolvidos</option>
+                </select>
+            </div>
+            
+            <div id="lista-chamados" class="grid-chamados"></div>
+        </section>
+    </main>
 
     <script type="importmap">
       {
@@ -92,8 +112,6 @@
         }
       }
     </script>
-    
     <script type="module" src="ti.js"></script>
-   
 </body>
 </html>
